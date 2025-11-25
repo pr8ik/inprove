@@ -42,7 +42,7 @@ export default function DateTimePickerComponent({
     };
 
     return (
-        <View className="mb-4">
+        <View style={{ marginBottom: 16 }}>
             <Text className="text-text-muted text-xs font-bold uppercase mb-2">{label}</Text>
             <TouchableOpacity
                 onPress={() => setShow(true)}

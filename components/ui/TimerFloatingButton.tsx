@@ -29,34 +29,33 @@ export default function TimerFloatingButton() {
         return `${h > 0 ? h + ':' : ''}${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     };
 
-    return (
-        <View className="absolute bottom-8 w-full items-center px-4">
+    if (!activeTimer) {
+        return (
             <TouchableOpacity
-                className={`flex-row items-center justify-center w-full py-5 rounded-2xl shadow-2xl ${activeTimer ? 'bg-highlight' : 'bg-accent'
-                    }`}
-                style={{
-                    shadowColor: activeTimer ? '#F97316' : '#3B82F6',
-                    shadowOffset: { width: 0, height: 10 },
-                    shadowOpacity: 0.5,
-                    shadowRadius: 20,
-                    elevation: 10,
-                }}
                 onPress={() => router.push('/modal/log-time')}
+                className="bg-accent w-16 h-16 rounded-full items-center justify-center shadow-lg shadow-accent/50"
             >
-                {activeTimer ? (
-                    <>
-                        <Square size={24} color="white" fill="white" />
-                        <Text className="text-white font-black ml-3 text-2xl font-mono tracking-widest">
-                            {formatTime(elapsed)}
-                        </Text>
-                    </>
-                ) : (
-                    <>
-                        <Play size={24} color="white" fill="white" />
-                        <Text className="text-white font-bold ml-3 text-xl tracking-wide uppercase">Start Tracking</Text>
-                    </>
-                )}
+                <Play size={28} color="white" fill="white" className="ml-1" />
             </TouchableOpacity>
+        );
+    }
+
+    return (
+        <View className="items-center">
+            {activeTimer.taskName && (
+                <View className="bg-secondary/90 px-4 py-2 rounded-full mb-2 border border-white/10">
+                    <Text className="text-white font-bold text-sm">{activeTimer.taskName}</Text>
+                </View>
+            )}
+            <TouchableOpacity
+                onPress={() => router.push('/modal/log-time')}
+                className="bg-highlight w-16 h-16 rounded-full items-center justify-center shadow-lg shadow-highlight/50 animate-pulse"
+            >
+                <Square size={24} color="white" fill="white" />
+            </TouchableOpacity>
+            <View className="bg-secondary/80 px-3 py-1 rounded-full mt-2">
+                <Text className="text-white font-mono font-bold">{formatTime(elapsed)}</Text>
+            </View>
         </View>
     );
 }

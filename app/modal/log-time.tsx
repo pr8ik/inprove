@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Alert, StatusBar, ScrollView, Switch } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, TouchableOpacity, TextInput, Alert, StatusBar, ScrollView } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useStore } from '../../lib/store';
-import { X, Play, Square, Save, Clock } from 'lucide-react-native';
+import { X, Play, Square, Save } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import { differenceInMinutes } from 'date-fns';
-import DateTimePickerComponent from '../../components/ui/DateTimePicker';
+import SimpleDateTimePicker from '../../components/ui/SimpleDateTimePicker';
 
 export default function LogTimeModal() {
     const router = useRouter();
+    const params = useLocalSearchParams();
     const { activeTimer, setActiveTimer } = useStore();
     const [taskName, setTaskName] = useState('');
     const [note, setNote] = useState('');
@@ -16,9 +17,9 @@ export default function LogTimeModal() {
     const [loading, setLoading] = useState(false);
 
     // Manual Entry Mode
-    const [isManualMode, setIsManualMode] = useState(false);
+    const [isManualMode, setIsManualMode] = useState(params.manual === 'true');
     const [manualStartTime, setManualStartTime] = useState(new Date());
-    const [manualEndTime, setManualEndTime] = useState<Date | null>(null);
+    const [manualEndTime, setManualEndTime] = useState<Date | null>(params.manual === 'true' ? new Date() : null);
 
     // Updated Categories
     const categories = [
@@ -38,6 +39,7 @@ export default function LogTimeModal() {
             setTaskName(activeTimer.taskName || '');
             setNote(activeTimer.note || '');
             setSelectedCategories(activeTimer.categoryIds || []);
+            setValueScore(activeTimer.valueScore || '');
         }
     }, [activeTimer]);
 
@@ -59,6 +61,7 @@ export default function LogTimeModal() {
             categoryIds: selectedCategories,
             taskName,
             note,
+            valueScore,
         });
         router.back();
     };
@@ -157,7 +160,7 @@ export default function LogTimeModal() {
     };
 
     return (
-        <View className="flex-1 bg-secondary">
+        <View style={{ flex: 1, backgroundColor: '#1E293B' }}>
             <StatusBar barStyle="light-content" />
             <ScrollView className="flex-1 p-6">
                 <View className="flex-row justify-between items-center mb-8 mt-4">
@@ -169,21 +172,24 @@ export default function LogTimeModal() {
                     </TouchableOpacity>
                 </View>
 
-                {/* Mode Toggle - Only show if no active timer */}
-                {!activeTimer && (
-                    <View className="mb-6 bg-tertiary rounded-2xl p-4 flex-row justify-between items-center">
-                        <View className="flex-row items-center">
-                            <Clock size={20} color={isManualMode ? '#3B82F6' : '#9CA3AF'} />
-                            <Text className="text-white font-bold ml-2">
-                                {isManualMode ? 'Manual Entry' : 'Stopwatch Mode'}
-                            </Text>
-                        </View>
-                        <Switch
-                            value={isManualMode}
-                            onValueChange={setIsManualMode}
-                            trackColor={{ false: '#4B5563', true: '#3B82F6' }}
-                            thumbColor={isManualMode ? '#ffffff' : '#f4f3f4'}
-                        />
+                {/* TODO: Manual mode temporarily disabled due to NativeWind navigation context conflict */}
+                {/* Will fix after Timeline enhancements */}
+                {false && !activeTimer && (
+                    <View key="mode-toggle" className="flex-row bg-tertiary p-1 rounded-xl mb-6">
+                        <TouchableOpacity
+                            className={`flex-1 py-3 rounded-lg items-center ${!isManualMode ? 'bg-secondary shadow-sm' : ''}`}
+                            onPress={() => setIsManualMode(false)}
+                            activeOpacity={0.7}
+                        >
+                            <Text className={`font-bold ${!isManualMode ? 'text-white' : 'text-text-muted'}`}>Stopwatch</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            className={`flex-1 py-3 rounded-lg items-center ${isManualMode ? 'bg-secondary shadow-sm' : ''}`}
+                            onPress={() => setIsManualMode(true)}
+                            activeOpacity={0.7}
+                        >
+                            <Text className={`font-bold ${isManualMode ? 'text-white' : 'text-text-muted'}`}>Manual Entry</Text>
+                        </TouchableOpacity>
                     </View>
                 )}
 
@@ -203,14 +209,14 @@ export default function LogTimeModal() {
                 {/* Manual Time Entry Fields */}
                 {isManualMode && !activeTimer && (
                     <>
-                        <DateTimePickerComponent
+                        <SimpleDateTimePicker
                             label="Start Time"
                             value={manualStartTime}
                             onChange={setManualStartTime}
                             mode="datetime"
                         />
 
-                        <DateTimePickerComponent
+                        <SimpleDateTimePicker
                             label="End Time (Optional)"
                             value={manualEndTime || new Date()}
                             onChange={(date) => setManualEndTime(date)}
@@ -219,9 +225,9 @@ export default function LogTimeModal() {
                         />
 
                         {manualEndTime && (
-                            <View className="mb-6 bg-primary/50 rounded-xl p-4">
-                                <Text className="text-text-muted text-xs uppercase mb-1">Duration</Text>
-                                <Text className="text-white text-2xl font-bold">
+                            <View style={{ marginBottom: 24, backgroundColor: 'rgba(15, 23, 42, 0.5)', borderRadius: 12, padding: 16 }}>
+                                <Text style={{ color: '#94A3B8', fontSize: 12, textTransform: 'uppercase', marginBottom: 4 }}>Duration</Text>
+                                <Text style={{ color: '#F8FAFC', fontSize: 24, fontWeight: '700' }}>
                                     {Math.floor(differenceInMinutes(manualEndTime, manualStartTime) / 60)}h {differenceInMinutes(manualEndTime, manualStartTime) % 60}m
                                 </Text>
                             </View>

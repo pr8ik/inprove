@@ -15,12 +15,33 @@ export default function EditLogModal() {
     // Form State
     const [taskName, setTaskName] = useState('');
     const [note, setNote] = useState('');
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [valueScore, setValueScore] = useState('');
     const [startTime, setStartTime] = useState(new Date());
     const [endTime, setEndTime] = useState(new Date());
 
     // Original data for reference
     const [originalLog, setOriginalLog] = useState<any>(null);
+
+    // Categories
+    const categories = [
+        { id: 'work', name: 'Work', color: '#3B82F6' },
+        { id: 'wellbeing', name: 'Wellbeing', color: '#10B981' },
+        { id: 'general', name: 'General', color: '#9CA3AF' },
+        { id: 'learning', name: 'Learning', color: '#F97316' },
+        { id: 'deep_work', name: 'Deep Work', color: '#8B5CF6' },
+        { id: 'entertainment', name: 'Entertainment', color: '#EC4899' },
+        { id: 'family', name: 'Family', color: '#EF4444' },
+        { id: 'others', name: 'Others', color: '#6B7280' },
+    ];
+
+    const toggleCategory = (id: string) => {
+        if (selectedCategories.includes(id)) {
+            setSelectedCategories(selectedCategories.filter(c => c !== id));
+        } else {
+            setSelectedCategories([...selectedCategories, id]);
+        }
+    };
 
     useEffect(() => {
         fetchLogDetails();
@@ -42,10 +63,31 @@ export default function EditLogModal() {
 
         setOriginalLog(data);
 
-        // Parse task name from note (first line)
-        const noteLines = (data.note || '').split('\n');
-        setTaskName(noteLines[0] || '');
-        setNote(noteLines.slice(1).join('\n') || '');
+        // Parse task name, notes, and tags
+        const fullNote = data.note || '';
+        const lines = fullNote.split('\n');
+
+        let extractedTaskName = lines[0] || '';
+        let extractedTags = '';
+        let extractedNoteLines: string[] = [];
+
+        // Look for Tags line
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i];
+            if (line.trim().startsWith('Tags:')) {
+                extractedTags = line.replace('Tags:', '').trim();
+            } else {
+                extractedNoteLines.push(line);
+            }
+        }
+
+        setTaskName(extractedTaskName);
+        setNote(extractedNoteLines.join('\n').trim());
+        // Parse tags into selected categories
+        if (extractedTags) {
+            const tagArray = extractedTags.split(',').map(t => t.trim()).filter(t => t);
+            setSelectedCategories(tagArray);
+        }
 
         setValueScore(data.value_score?.toString() || '');
         setStartTime(new Date(data.start_time));
@@ -68,7 +110,10 @@ export default function EditLogModal() {
         setLoading(true);
 
         const durationSeconds = differenceInMinutes(endTime, startTime) * 60;
-        const finalNote = taskName + (note ? '\n' + note : '');
+
+        // Rebuild note with tags
+        const tagsString = selectedCategories.join(', ');
+        const finalNote = `${taskName}\n${note || ''}\nTags: ${tagsString}`;
 
         const { error } = await supabase
             .from('time_logs')
@@ -160,6 +205,27 @@ export default function EditLogModal() {
                     <Text className="text-white text-2xl font-bold">
                         {Math.floor(differenceInMinutes(endTime, startTime) / 60)}h {differenceInMinutes(endTime, startTime) % 60}m
                     </Text>
+                </View>
+
+                {/* Categories */}
+                <View className="mb-6">
+                    <Text className="text-text-muted text-sm font-bold uppercase tracking-wider mb-2">Categories (Multi-select)</Text>
+                    <View className="flex-row flex-wrap gap-2">
+                        {categories.map((cat) => {
+                            const isSelected = selectedCategories.includes(cat.id);
+                            return (
+                                <TouchableOpacity
+                                    key={cat.id}
+                                    onPress={() => toggleCategory(cat.id)}
+                                    className={`px-4 py-2 rounded-full border ${isSelected ? 'bg-accent/20 border-accent' : 'bg-tertiary border-white/5'}`}
+                                >
+                                    <Text className={`font-bold ${isSelected ? 'text-white' : 'text-gray-400'}`}>
+                                        {cat.name}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
                 </View>
 
                 {/* Notes */}

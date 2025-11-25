@@ -58,11 +58,11 @@ export default function Habits() {
             return;
         }
 
-        // Fetch habit items
+        // Fetch habit items via habit_programs relationship
         const { data: habitItems, error: habitsError } = await supabase
             .from('habit_items')
-            .select('*')
-            .eq('user_id', user.id)
+            .select('*, habit_programs!inner(user_id)')
+            .eq('habit_programs.user_id', user.id)
             .order('created_at', { ascending: false });
 
         if (habitsError) {
@@ -94,8 +94,8 @@ export default function Habits() {
             .eq('date', today);
 
         const habitsWithStatus = habitItems.map(habit => {
-            const habitLogs = allLogs?.filter(l => l.habit_id === habit.id) || [];
-            const todayLog = todayLogs?.find(l => l.habit_id === habit.id);
+            const habitLogs = allLogs?.filter(l => l.habit_item_id === habit.id) || [];
+            const todayLog = todayLogs?.find(l => l.habit_item_id === habit.id);
             const streak = calculateStreak(habitLogs);
 
             return {
@@ -151,64 +151,70 @@ export default function Habits() {
     return (
         <SafeAreaView className="flex-1 bg-primary">
             <StatusBar barStyle="light-content" />
-            <View className="px-5 pt-6 pb-3 flex-row justify-between items-center">
+            <View className="px-5 pt-12 pb-4 flex-row justify-between items-center">
                 <View>
-                    <Text className="text-white text-3xl font-bold">Habits</Text>
-                    <Text className="text-text-muted text-sm mt-1">Build your routine</Text>
+                    <Text className="text-white text-3xl font-black tracking-tight">Habits</Text>
+                    <Text className="text-text-subtle text-sm font-medium mt-1">Build your daily routine</Text>
                 </View>
                 <TouchableOpacity
                     onPress={() => router.push('/modal/create-habit')}
-                    className="bg-accent w-12 h-12 rounded-full items-center justify-center"
+                    className="bg-accent w-12 h-12 rounded-2xl items-center justify-center shadow-lg"
+                    activeOpacity={0.8}
                 >
                     <Plus size={24} color="white" strokeWidth={2.5} />
                 </TouchableOpacity>
             </View>
 
-            <ScrollView className="flex-1 px-5">
+            <ScrollView className="flex-1 px-5 pb-6">
                 {loading ? (
                     <View className="items-center justify-center mt-20">
-                        <Text className="text-text-muted">Loading...</Text>
+                        <Text className="text-text-muted font-medium">Loading habits...</Text>
                     </View>
                 ) : habits.length === 0 ? (
-                    <View className="items-center justify-center mt-20">
-                        <Text className="text-text-muted text-center italic">
-                            No habits yet. Create your first one!
-                        </Text>
+                    <View className="items-center justify-center mt-16 px-6">
+                        <View className="bg-secondary/50 p-10 rounded-3xl border border-white/10 w-full items-center">
+                            <Text className="text-text-muted text-lg font-bold text-center">No habits yet</Text>
+                            <Text className="text-text-subtle text-sm text-center mt-2">Tap the + button to create your first habit</Text>
+                        </View>
                     </View>
                 ) : (
                     habits.map((habit) => (
                         <TouchableOpacity
                             key={habit.id}
                             onPress={() => toggleHabit(habit)}
-                            className={`mb-3 p-4 rounded-2xl border flex-row items-center justify-between ${habit.completed
-                                    ? 'bg-accent/10 border-accent/30'
-                                    : 'bg-secondary border-white/5'
+                            activeOpacity={0.7}
+                            className={`mb-4 p-5 rounded-3xl border flex-row items-center justify-between shadow-md ${habit.completed
+                                ? 'bg-success/5 border-success/20'
+                                : 'bg-secondary border-white/10'
                                 }`}
-                            style={{
-                                opacity: habit.completed ? 0.8 : 1
-                            }}
                         >
                             <View className="flex-row items-center flex-1">
                                 <View
-                                    className={`w-8 h-8 rounded-full border-2 mr-4 items-center justify-center ${habit.completed
-                                            ? 'bg-accent border-accent'
-                                            : 'border-white/20 bg-white/5'
+                                    className={`w-10 h-10 rounded-2xl border-2 mr-4 items-center justify-center ${habit.completed
+                                        ? 'bg-success/20 border-success'
+                                        : 'border-white/20 bg-white/5'
                                         }`}
                                 >
-                                    {habit.completed && <Check size={16} color="white" strokeWidth={3} />}
+                                    {habit.completed && <Check size={20} color="#34D399" strokeWidth={3} />}
                                 </View>
-                                <View>
-                                    <Text className={`text-lg font-bold ${habit.completed ? 'text-white/50 line-through' : 'text-white'}`}>
+                                <View className="flex-1">
+                                    <Text
+                                        className={`text-lg font-bold ${habit.completed ? 'text-white/60 line-through' : 'text-white'
+                                            }`}
+                                    >
                                         {habit.name}
                                     </Text>
-                                    <Text className="text-text-muted text-xs">Daily Goal</Text>
+                                    <Text className="text-text-subtle text-xs font-medium mt-0.5">Daily Goal</Text>
                                 </View>
                             </View>
 
-                            <View className="flex-row items-center bg-primary/50 px-3 py-1.5 rounded-lg">
-                                <Text className="text-white font-bold mr-1.5">{habit.streak}</Text>
-                                <Flame size={14} color={habit.color || '#F59E0B'} fill={habit.color || '#F59E0B'} />
-                            </View>
+                            {/* Streak Badge */}
+                            {habit.streak > 0 && (
+                                <View className="bg-highlight/10 px-3 py-2 rounded-xl border border-highlight/20 flex-row items-center">
+                                    <Flame size={16} color="#FB923C" />
+                                    <Text className="text-highlightLight font-black text-sm ml-1">{habit.streak}</Text>
+                                </View>
+                            )}
                         </TouchableOpacity>
                     ))
                 )}

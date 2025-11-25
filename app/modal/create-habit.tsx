@@ -66,11 +66,11 @@ export default function CreateHabitModal() {
         // 2. Create Habit Item
         const { data: newHabit, error } = await supabase.from('habit_items').insert({
             program_id: programId,
-            user_id: user.id, // Add user_id explicitly
+            // user_id: user.id, // Removed: Schema does not have user_id on habit_items
             name,
             target_value: 1,
             target_unit: 'count',
-            color: selectedColor, // Store selected color
+            // color: selectedColor, // Removed as column doesn't exist in DB
         }).select().single();
 
         if (error) {
@@ -79,9 +79,7 @@ export default function CreateHabitModal() {
             setLoading(false);
         } else {
             console.log('Habit created successfully:', newHabit);
-            Alert.alert('Success', 'Habit created!', [
-                { text: 'OK', onPress: () => router.back() }
-            ]);
+            router.back();
         }
         setLoading(false);
     };

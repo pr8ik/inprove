@@ -5,6 +5,7 @@ interface ActiveTimer {
     categoryIds: string[]
     taskName: string
     note?: string
+    valueScore?: string
 }
 
 interface AppState {

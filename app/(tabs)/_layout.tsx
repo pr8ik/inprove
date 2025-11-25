@@ -8,13 +8,13 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#000000', // True Black
-          borderTopColor: '#1E1E1E',
-          height: 80, // Taller tab bar
+          backgroundColor: '#0F172A', // Slate 900
+          borderTopColor: '#1E293B', // Slate 800
+          height: 80,
           paddingTop: 10,
         },
         tabBarActiveTintColor: '#3B82F6', // Electric Blue
-        tabBarInactiveTintColor: '#666',
+        tabBarInactiveTintColor: '#94A3B8', // Slate 400
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
